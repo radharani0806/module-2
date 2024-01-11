@@ -6,9 +6,13 @@ pragma solidity ^0.8.9;
 contract Assessment {
     address payable public owner;
     uint256 public balance;
+    uint256 public smallCapFund;
+    uint256 public largeCapFund;
 
     event Deposit(uint256 amount);
     event Withdraw(uint256 amount);
+    event InvestedInSmallCap(uint256 amount);
+    event InvestedInLargeCap(uint256 amount);
 
     constructor(uint initBalance) payable {
         owner = payable(msg.sender);
@@ -57,5 +61,32 @@ contract Assessment {
         // emit the event
         emit Withdraw(_withdrawAmount);
     }
-}
 
+    function investInSmallCap(uint256 _amount) public {
+        // make sure this is the owner
+        require(msg.sender == owner, "You are not the owner of this account");
+
+        // invest in small-cap fund
+        smallCapFund += _amount;
+
+        // deduct the invested amount from the balance
+        balance -= _amount;
+
+        // emit the investment event
+        emit InvestedInSmallCap(_amount);
+    }
+
+    function investInLargeCap(uint256 _amount) public {
+        // make sure this is the owner
+        require(msg.sender == owner, "You are not the owner of this account");
+
+        // invest in large-cap fund
+        largeCapFund += _amount;
+
+        // deduct the invested amount from the balance
+        balance -= _amount;
+
+        // emit the investment event
+        emit InvestedInLargeCap(_amount);
+    }
+}
