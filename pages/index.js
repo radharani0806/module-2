@@ -58,22 +58,16 @@ export default function HomePage() {
 
   const getBalance = async () => {
     if (atm) {
-      const previousBalance = balance || 0;
       const currentBalance = (await atm.getBalance()).toNumber();
       setBalance(currentBalance);
 
-      // Determine the type of transaction based on the sign of the balance change
-      const balanceChange = currentBalance - previousBalance;
-      const transactionType = balanceChange >= 0 ? "Deposit" : "Withdraw";
-      const transactionAmount = Math.abs(balanceChange);
-
       // Store the receipt for the transaction
       const receipt = {
-        type: transactionType,
+        type: "Balance Update",
         transactionNumber: receipts.length + 1,
         owner: account,
         balance: currentBalance,
-        amount: transactionAmount,
+        amount: 0, // No actual transaction amount for balance updates
       };
 
       // Update the receipts array with the new receipt
@@ -84,17 +78,33 @@ export default function HomePage() {
   const performTransaction = async (isDeposit) => {
     if (atm) {
       const amount = isDeposit ? depositAmount : withdrawalAmount;
-      let tx;
+      try {
+        let tx;
 
-      if (isDeposit) {
-        tx = await atm.deposit(amount);
-      } else {
-        tx = await atm.withdraw(amount);
+        if (isDeposit) {
+          tx = await atm.deposit(amount);
+        } else {
+          tx = await atm.withdraw(amount);
+        }
+
+        await tx.wait();
+        getBalance();
+        updateLastThreeReceipts();
+      } catch (error) {
+        console.error("Error performing transaction:", error);
       }
+    }
+  };
 
-      await tx.wait();
-      getBalance();
-      updateLastThreeReceipts();
+  const multiplyFunds = async () => {
+    if (atm) {
+      try {
+        await atm.multiplyFunds();
+        getBalance();
+        updateLastThreeReceipts();
+      } catch (error) {
+        console.error("Error multiplying funds:", error);
+      }
     }
   };
 
@@ -147,6 +157,8 @@ export default function HomePage() {
           />
         </label>
         <button onClick={() => performTransaction(false)}>Withdraw</button>
+        <br />
+        <button onClick={multiplyFunds}>Multiply Funds by 5x</button>
         <div>
           <h2>Last Three Receipts</h2>
           {receipts.map((receipt, index) => (
